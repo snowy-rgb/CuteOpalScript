@@ -36,7 +36,7 @@
       height: 100%;
     }
 
-    /* 상단 바 (타이틀, 상태, 실행 버튼) */
+    /* 상단 바 (타이틀, 상태, 실행 버튼, 이미지 포함) */
     #top-bar {
       display: flex;
       align-items: center;
@@ -44,17 +44,32 @@
       padding: 0 1em;
       background: #282a36;
       border-bottom: 1px solid #444;
-      height: 60px;
+      height: 100px; /* 기존보다 크게 */
     }
-    #top-bar h1 {
+
+    /* 상단 바 이미지 (원하는 이미지 경로로 변경) */
+    #top-bar-img {
+      height: 80%;      /* 상단 바 내부에서 적절히 보이도록 */
+      margin-right: 1em;
+    }
+
+    /* 제목과 상태 메시지를 묶는 컨테이너 */
+    #top-bar-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    #top-bar-text h1 {
       margin: 0;
-      font-size: 1.5rem;
+      font-size: 1.6rem;
     }
     #status {
-      margin: 0 1em;
-      /* Pyodide 로드 상태에 따라 색상 변경 가능 */
-      color: #50fa7b; /* 예: 로드 완료 시 녹색 */
+      margin: 0;
+      color: #50fa7b; /* Pyodide 로드 완료 시 녹색 예시 */
     }
+
     #runButton {
       font-size: 16px;
       padding: 10px 20px;
@@ -78,13 +93,12 @@
     /* 에디터 영역 */
     .editor {
       flex: 1;
-      /* separator를 따로 넣을 것이므로 border-right는 제거 */
     }
 
     /* 에디터와 출력창 사이 구분선(이미지) */
     .separator {
       flex: 0 0 auto;
-      width: 8px; /* '얇게' 보이도록 폭 설정 (원하시면 조정) */
+      width: 8px; /* 얇게 보이도록 폭 설정 */
       background: #282a36; /* 혹은 투명/다른 색상 */
       display: flex;
       align-items: stretch;
@@ -105,9 +119,20 @@
       overflow: auto;
     }
 
-    /* CodeMirror 에디터 전체 높이 채우기 */
+    /* CodeMirror 에디터 전체 높이 채우기 + 폰트 크게, 줄 간격 여유 */
     .CodeMirror {
       height: 100%;
+      font-size: 16px;        /* 폰트 크기 키우기 */
+      line-height: 1.5;       /* 줄 간격 여유 */
+      font-family: "Consolas", monospace;
+    }
+
+    /* 출력창 텍스트도 크게, 줄 간격 여유 */
+    .output pre {
+      font-size: 16px;
+      line-height: 1.5;
+      font-family: "Consolas", monospace;
+      margin: 0;
     }
   </style>
 </head>
@@ -115,8 +140,16 @@
   <div id="main-container">
     <!-- 상단 바 -->
     <div id="top-bar">
-      <h1>트릭컬 실행기</h1>
-      <p id="status">🔄 Pyodide 로드 중...</p>
+      <!-- 상단 바에 이미지 (원하는 이미지로 교체) -->
+      <img src="header-image.png" alt="Top Bar Image" id="top-bar-img" />
+
+      <!-- 타이틀 + 상태 -->
+      <div id="top-bar-text">
+        <h1>트릭컬 실행기</h1>
+        <p id="status">🔄 Pyodide 로드 중...</p>
+      </div>
+
+      <!-- 실행 버튼 -->
       <button id="runButton" onclick="runTric()" disabled>로딩 중...</button>
     </div>
 
@@ -126,13 +159,13 @@
       <div class="editor">
         <textarea id="code">
 !DOCTYPE 교주
-        </textarea>
+</textarea>
       </div>
 
       <!-- 가운데 구분선 (이미지) -->
       <div class="separator">
         <!-- 실제로 사용할 얇은 이미지 경로로 교체하세요 -->
-        <img src="opal.png" alt="Separator" />
+        <img src="thin-separator.png" alt="Separator" />
       </div>
 
       <!-- 오른쪽: 출력창 -->
@@ -252,7 +285,6 @@ ${result.code}
 output = mystdout.getvalue()
 output
         `;
-
         let output = await pyodideInstance.runPython(pythonCode);
         document.getElementById("output").textContent = output;
       } catch (err) {
