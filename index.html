@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>트릭컬 실행기</title>
-
     <script src="https://cdn.jsdelivr.net/pyodide/v0.23.0/full/pyodide.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
@@ -16,18 +15,13 @@
 <body>
     <h1>트릭컬 실행기</h1>
     <p id="status">🔄 Pyodide 로드 중...</p>
-
-    <textarea>
-    !DOCTYPE 교주
-    </textarea>
-
-    
+    <textarea id="code">
+!DOCTYPE 교주
+</textarea>
     <br>
     <button id="runButton" onclick="runTric()" disabled>로딩 중...</button>
-    
     <h2>출력 결과</h2>
     <pre id="output"></pre>
-    
 
     <script>
         let pyodideReady = false;
@@ -136,5 +130,5 @@ output
 </body>
 </html>
 
-ver 1.22
+ver 1.31
 
