@@ -49,10 +49,9 @@
 
             let pythonCode = lines.join("\n");
 
-            // 변환할 규칙 정의
+            // 변환할 규칙 정의 (정규식 사용)
             let rules = {
                 "교주님! ": "print(",
-                "부르셨나요~? ": "def ",
                 "되는거죠?! ": "if ",
                 "아니시겠죠?!:": "else:",
                 "계~속 ": "for ",
@@ -67,8 +66,12 @@
                 pythonCode = pythonCode.replace(regex, rules[tric]);
             }
 
+            // 부르셨나요~? 함수이름(매개변수):  → def 함수이름(매개변수):
+            pythonCode = pythonCode.replace(/부르셨나요~?\s+(\w+)\((.*?)\):/g, "def $1($2):");
+
             return { code: pythonCode };
         }
+
         //pyodide 로드
         async function runTric() {
             if (!pyodideReady) {
