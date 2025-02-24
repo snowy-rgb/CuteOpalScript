@@ -71,16 +71,11 @@
             pythonCode = pythonCode.replace(/아니시겠죠\?!\s*:/g, "else:");
         
             // ✅ 함수 변환 수정 (특수문자 문제 해결): "부르셨나요~? 함수이름(매개변수) :" → "def 함수이름(매개변수):"
-            pythonCode = pythonCode.replace(
-              /부르셨나요~\?\s+(\w+)\s*\((.*?)\)\s*:?\s*$/gm,
-              "def $1($2):"
-            );
-            
+            pythonCode = pythonCode.replace(/부르셨나요~\?\s+(\w+)\s*\((.*?)\)\s*:?\s*$/gm, "def $1($2):");
+
             // ✅ print() 괄호 자동 수정
-            pythonCode = pythonCode.replace(
-              /반복합니다~\?\s+(\w+)\s+in\s+(.+?)\s*:/g,
-              "for $1 in $2:"
-            );
+            // 수정 예시: 한글과 영문 모두를 포함하도록 ([\uac00-\ud7a3\w]+) 사용
+            pythonCode = pythonCode.replace(/부르셨나요~\?\s+([\uac00-\ud7a3\w]+)\s*\((.*?)\)\s*:?\s*$/gm, "def $1($2):");
             
             return { code: pythonCode };
         }
