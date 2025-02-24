@@ -14,15 +14,30 @@
 </head>
 <body>
     <h1>트릭컬 실행기</h1>
+    <p id="status">🔄 Pyodide 로드 중...</p>
     <textarea id="code">
 !DOCTYPE 교주
 </textarea>
     <br>
-    <button onclick="runTric()">실행</button>
+    <button id="runButton" onclick="runTric()" disabled>로딩 중...</button>
     <h2>출력 결과</h2>
     <pre id="output"></pre>
 
     <script>
+        let pyodideReady = false;
+        let pyodideInstance = null;
+
+        async function loadPyodideAndCache() {
+            document.getElementById("status").textContent = "🔄 Pyodide 로드 중...";
+            pyodideInstance = await loadPyodide();
+            pyodideReady = true;
+            document.getElementById("status").textContent = "✅ Pyodide 로드 완료!";
+            document.getElementById("runButton").textContent = "실행";
+            document.getElementById("runButton").disabled = false;
+        }
+
+        loadPyodideAndCache(); // 웹 페이지가 로드될 때 Pyodide 미리 로드
+
         function tricToPython(tricCode) {
             let lines = tricCode.trim().split("\n");
 
@@ -54,6 +69,11 @@
         }
 
         async function runTric() {
+            if (!pyodideReady) {
+                document.getElementById("output").textContent = "⚠️ Pyodide가 아직 로드되지 않았습니다!";
+                return;
+            }
+
             let tricCode = document.getElementById("code").value;
             let result = tricToPython(tricCode);
 
@@ -62,7 +82,7 @@
                 return;
             }
 
-            let pyodide = await loadPyodide();
+            document.getElementById("output").textContent = "⏳ 실행 중...";
             try {
                 let pythonCode = `
 import sys
@@ -75,8 +95,8 @@ ${result.code}
 output = mystdout.getvalue()
 output
                 `;
-                
-                let output = await pyodide.runPython(pythonCode);
+
+                let output = await pyodideInstance.runPython(pythonCode);
                 document.getElementById("output").textContent = output;
             } catch (err) {
                 document.getElementById("output").textContent = "⚠️ 실행 오류: " + err;
@@ -85,5 +105,6 @@ output
     </script>
 </body>
 </html>
+
 
 
