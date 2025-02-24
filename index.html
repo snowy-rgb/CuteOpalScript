@@ -75,8 +75,11 @@
 
             // ✅ print() 괄호 자동 수정
             // 수정 예시: 한글과 영문 모두를 포함하도록 ([\uac00-\ud7a3\w]+) 사용
-            pythonCode = pythonCode.replace(/부르셨나요~\?\s+([\uac00-\ud7a3\w]+)\s*\((.*?)\)\s*:?\s*$/gm, "def $1($2):");
-            
+            pythonCode = pythonCode.replace(
+              /계~속\s+(\w+)\s+에헷:\s+(\d+)\s+부터\s+(\d+)\s+까지:/g,
+              "for $1 in range($2, $3+1):"
+            );
+
             return { code: pythonCode };
         }
 
