@@ -70,8 +70,8 @@
             // ✅ else 변환: "아니시겠죠?! :" → "else:"
             pythonCode = pythonCode.replace(/아니시겠죠\?!\s*:/g, "else:");
         
-            // ✅ 함수 변환 수정: "부르셨나요~? 함수이름(매개변수):" → "def 함수이름(매개변수):"
-            pythonCode = pythonCode.replace(/부르셨나요~?\s+(\w+)\s*\((.*?)\)\s*:/g, "def $1($2):");
+            // ✅ 함수 변환 수정 (콜론 문제 해결): "부르셨나요~? 함수이름(매개변수):" → "def 함수이름(매개변수):"
+            pythonCode = pythonCode.replace(/부르셨나요~?\s+(\w+)\s*\((.*?)\)\s*:?/g, "def $1($2):");
         
             // ✅ 반복문 변환 수정: "계~속 변수 에헷: 시작 부터 끝 까지:" → "for 변수 in range(시작, 끝):"
             pythonCode = pythonCode.replace(/계~속\s+(\w+)\s+에헷:\s*(\d+)\s+부터\s+(\d+)\s+까지:/g, "for $1 in range($2, $3):");
@@ -81,6 +81,7 @@
         
             return { code: pythonCode };
         }
+
 
 
 
