@@ -24,11 +24,15 @@
 
     <script>
         function tricToPython(tricCode) {
-            // 먼저 '!DOCTYPE 교주'가 첫 줄에 있는지 확인
             let lines = tricCode.trim().split("\n");
+
+            // '!DOCTYPE 교주' 확인 & 삭제
             if (!lines[0].startsWith("!DOCTYPE 교주")) {
                 return { error: "❌ 교주가 없습니다! 실행 불가!" };
             }
+            lines.shift(); // 첫 줄 삭제
+
+            let pythonCode = lines.join("\n");
 
             // 변환할 규칙 정의
             let rules = {
@@ -41,7 +45,6 @@
                 "같다": "=="
             };
 
-            let pythonCode = tricCode;
             for (let tric in rules) {
                 let regex = new RegExp(tric, "g");
                 pythonCode = pythonCode.replace(regex, rules[tric]);
@@ -70,3 +73,4 @@
     </script>
 </body>
 </html>
+
