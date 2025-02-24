@@ -1,114 +1,170 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>트릭컬 실행기</title>
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.0/full/pyodide.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        textarea { width: 80%; height: 200px; font-size: 16px; }
-        button { font-size: 16px; padding: 10px; }
-        pre { background: #f4f4f4; padding: 10px; text-align: left; width: 80%; margin: auto; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>트릭컬 실행기</title>
+  <!-- Pyodide -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.23.0/full/pyodide.js"></script>
+  <!-- CodeMirror CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/theme/dracula.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #282a36;
+      color: #f8f8f2;
+    }
+    header {
+      text-align: center;
+      padding: 1em;
+    }
+    #main-container {
+      display: flex;
+      height: calc(100vh - 140px); /* 헤더, 컨트롤 영역 제외 */
+    }
+    .editor {
+      flex: 1;
+      border-right: 1px solid #444;
+    }
+    .output {
+      flex: 1;
+      background: #44475a;
+      padding: 10px;
+      overflow: auto;
+    }
+    .CodeMirror {
+      height: 100%;
+    }
+    #controls {
+      text-align: center;
+      padding: 10px;
+    }
+    button {
+      font-size: 16px;
+      padding: 10px 20px;
+    }
+    #status {
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
+  <header>
     <h1>트릭컬 실행기</h1>
     <p id="status">🔄 Pyodide 로드 중...</p>
-    <textarea id="code">
+  </header>
+  <div id="main-container">
+    <!-- CodeMirror 에디터 (왼쪽) -->
+    <div class="editor">
+      <textarea id="code">
 !DOCTYPE 교주
-</textarea>
-    <br>
+      </textarea>
+    </div>
+    <!-- 출력창 (오른쪽) -->
+    <div class="output">
+      <pre id="output">출력 결과가 여기에 표시됩니다.</pre>
+    </div>
+  </div>
+  <div id="controls">
     <button id="runButton" onclick="runTric()" disabled>로딩 중...</button>
-    <h2>출력 결과</h2>
-    <pre id="output"></pre>
+  </div>
 
-    <script>
-        let pyodideReady = false;
-        let pyodideInstance = null;
+  <!-- CodeMirror JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/mode/python/python.min.js"></script>
 
-        async function loadPyodideAndCache() {
-            document.getElementById("status").textContent = "🔄 Pyodide 로드 중...";
-            pyodideInstance = await loadPyodide();
-            pyodideReady = true;
-            document.getElementById("status").textContent = "✅ Pyodide 로드 완료!";
-            document.getElementById("runButton").textContent = "실행";
-            document.getElementById("runButton").disabled = false;
-        }
+  <script>
+    let pyodideReady = false;
+    let pyodideInstance = null;
+    let editor = null;
 
-        loadPyodideAndCache(); // 웹 페이지가 로드될 때 Pyodide 미리 로드
+    // Pyodide 미리 로드
+    async function loadPyodideAndCache() {
+      document.getElementById("status").textContent = "🔄 Pyodide 로드 중...";
+      pyodideInstance = await loadPyodide();
+      pyodideReady = true;
+      document.getElementById("status").textContent = "✅ Pyodide 로드 완료!";
+      document.getElementById("runButton").textContent = "실행";
+      document.getElementById("runButton").disabled = false;
+    }
+    loadPyodideAndCache();
 
-        function tricToPython(tricCode) {
-            let lines = tricCode.trim().split("\n");
-        
-            // '!DOCTYPE 교주' 확인 & 삭제
-            if (!lines[0].startsWith("!DOCTYPE 교주")) {
-                return { error: "❌ 교주가 없습니다! 실행 불가!" };
-            }
-            lines.shift(); // 첫 줄 삭제
-        
-            let pythonCode = lines.join("\n");
-        
-            // 변환할 규칙 정의 (정규식 사용)
-            let rules = {
-                "교주님! ": "print(",
-                "아니시겠죠?!": "else:", // ✅ else 변환 정상화
-                "친구인 거예요~? ": "", // '변수' 키워드 삭제
-                " 에헷: ": " = ", // 변수 할당
-                "되나요? ": "==",
-                "귀여워 ": "return " // 반환 변환
-            };
-        
-            for (let tric in rules) {
-                let regex = new RegExp(tric, "g");
-                pythonCode = pythonCode.replace(regex, rules[tric]);
-            }
-        
-            // ✅ 조건문 변환: "되는거죠?! <조건식> 되나요? <값> :" → "if <조건식> == <값>:"
-            pythonCode = pythonCode.replace(/되는거죠\?!\s+(.+?)\s+되나요\?\s+(.+?)\s*:/g, "if ($1 == $2):");
-        
-            // ✅ else 변환: "아니시겠죠?! :" → "else:"
-            pythonCode = pythonCode.replace(/아니시겠죠\?!\s*:/g, "else:");
-        
-            // ✅ 함수 변환 수정 (특수문자 문제 해결): "부르셨나요~? 함수이름(매개변수) :" → "def 함수이름(매개변수):"
-            pythonCode = pythonCode.replace(/부르셨나요~\?\s+(\w+)\s*\((.*?)\)\s*:?\s*$/gm, "def $1($2):");
+    // CodeMirror 에디터 초기화
+    window.addEventListener("load", function() {
+      editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+        lineNumbers: true,         // 왼쪽 라인 번호 표시
+        theme: "dracula",          // 어두운 테마
+        mode: "python",            // Python 모드 (필요 시 다른 모드로 변경)
+        tabSize: 4,                // 탭 크기 4칸
+        indentWithTabs: false      // 탭 대신 공백 사용
+      });
+    });
 
-            // ✅ print() 괄호 자동 수정
-            // 수정 예시: 한글과 영문 모두를 포함하도록 ([\uac00-\ud7a3\w]+) 사용
-            pythonCode = pythonCode.replace(
-              /계~속\s+(\w+)\s+에헷:\s+(\d+)\s+부터\s+(\d+)\s+까지:/g,
-              "for $1 in range($2, $3+1):"
-            );
+    // 트릭컬 언어를 Python 코드로 변환하는 함수
+    function tricToPython(tricCode) {
+      let lines = tricCode.trim().split("\n");
 
-            return { code: pythonCode };
-        }
+      // '!DOCTYPE 교주' 확인 & 삭제
+      if (!lines[0].startsWith("!DOCTYPE 교주")) {
+        return { error: "❌ 교주가 없습니다! 실행 불가!" };
+      }
+      lines.shift(); // 첫 줄 삭제
 
+      let pythonCode = lines.join("\n");
 
+      // 변환 규칙 정의 (정규식 사용)
+      let rules = {
+        "교주님! ": "print(",
+        "아니시겠죠?!": "else:", // else 변환
+        "친구인 거예요~? ": "", // 변수 키워드 삭제
+        " 에헷: ": " = ", // 변수 할당
+        "되나요? ": "==",
+        "귀여워 ": "return " // 반환 변환
+      };
 
+      for (let tric in rules) {
+        let regex = new RegExp(tric, "g");
+        pythonCode = pythonCode.replace(regex, rules[tric]);
+      }
 
+      // 조건문 변환: "되는거죠?! <조건식> 되나요? <값> :" → "if (<조건식> == <값>):"
+      pythonCode = pythonCode.replace(/되는거죠\?!\s+(.+?)\s+되나요\?\s+(.+?)\s*:/g, "if ($1 == $2):");
 
+      // else 변환: "아니시겠죠?! :" → "else:"
+      pythonCode = pythonCode.replace(/아니시겠죠\?!\s*:/g, "else:");
 
+      // 함수 변환: "부르셨나요~? 함수이름(매개변수) :" → "def 함수이름(매개변수):"
+      pythonCode = pythonCode.replace(/부르셨나요~\?\s+(\w+)\s*\((.*?)\)\s*:?\s*$/gm, "def $1($2):");
 
+      // for 루프 변환: "계~속 <변수> 에헷: <시작숫자> 부터 <끝숫자> 까지:" → "for <변수> in range(<시작숫자>, <끝숫자>+1):"
+      pythonCode = pythonCode.replace(
+        /계~속\s+(\w+)\s+에헷:\s+(\d+)\s+부터\s+(\d+)\s+까지:/g,
+        "for $1 in range($2, $3+1):"
+      );
 
+      return { code: pythonCode };
+    }
 
-        //pyodide 로드
-        async function runTric() {
-            if (!pyodideReady) {
-                document.getElementById("output").textContent = "⚠️ Pyodide가 아직 로드되지 않았습니다!";
-                return;
-            }
+    // 실행 함수: CodeMirror의 값을 가져와 변환 후 Pyodide로 실행
+    async function runTric() {
+      if (!pyodideReady) {
+        document.getElementById("output").textContent = "⚠️ Pyodide가 아직 로드되지 않았습니다!";
+        return;
+      }
 
-            let tricCode = document.getElementById("code").value;
-            let result = tricToPython(tricCode);
+      let tricCode = editor.getValue();
+      let result = tricToPython(tricCode);
 
-            if (result.error) {
-                document.getElementById("output").textContent = result.error;
-                return;
-            }
+      if (result.error) {
+        document.getElementById("output").textContent = result.error;
+        return;
+      }
 
-            document.getElementById("output").textContent = "⏳ 실행 중...";
-            try {
-                let pythonCode = `
+      document.getElementById("output").textContent = "⏳ 실행 중...";
+      try {
+        let pythonCode = `
 import sys
 from io import StringIO
 
@@ -118,17 +174,14 @@ ${result.code}
 
 output = mystdout.getvalue()
 output
-                `;
-
-                let output = await pyodideInstance.runPython(pythonCode);
-                document.getElementById("output").textContent = output;
-            } catch (err) {
-                document.getElementById("output").textContent = "⚠️ 실행 오류: " + err;
-            }
-        }
-    </script>
+        `;
+        let output = await pyodideInstance.runPython(pythonCode);
+        document.getElementById("output").textContent = output;
+      } catch (err) {
+        document.getElementById("output").textContent = "⚠️ 실행 오류: " + err;
+      }
+    }
+  </script>
 </body>
 </html>
-
-ver 1.31
 
