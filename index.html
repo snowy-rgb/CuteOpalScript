@@ -53,7 +53,7 @@
             let rules = {
                 "교주님! ": "print(",
                 "되는거죠?! ": "if ",
-                "아니시겠죠?!:": "else:",
+                "아니시겠죠?! ": "else ",
                 "계~속 ": "for ",
                 "친구인 거예요~? ": "", // '변수' 키워드 삭제
                 " 에헷: ": " = ", // 변수 할당
@@ -69,8 +69,15 @@
             // 부르셨나요~? 함수이름(매개변수):  → def 함수이름(매개변수):
             pythonCode = pythonCode.replace(/부르셨나요~?\s+(\w+)\((.*?)\):/g, "def $1($2):");
 
+            // 조건문 변환 개선: "되는거죠?! <조건식> 되나요? <값> :" → "if <조건식> == <값>:"
+            pythonCode = pythonCode.replace(/if (.+?) 되나요\? (.+?)\s*:/g, "if ($1 == $2):");
+
+            // print() 괄호 자동 수정 (닫는 `)` 추가/제거)
+            pythonCode = pythonCode.replace(/print\((.*?)\)\)/g, "print($1)"); // `))` 오류 수정
+
             return { code: pythonCode };
         }
+
 
         //pyodide 로드
         async function runTric() {
