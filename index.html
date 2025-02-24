@@ -15,13 +15,18 @@
 <body>
     <h1>트릭컬 실행기</h1>
     <p id="status">🔄 Pyodide 로드 중...</p>
-    <textarea id="code">
-!DOCTYPE 교주
-</textarea>
+    <div class="container">
+        <div class="line-numbers" id="line-numbers"></div>
+        <textarea id="code">
+        !DOCTYPE 교주
+        </textarea>
+    </div>
     <br>
     <button id="runButton" onclick="runTric()" disabled>로딩 중...</button>
-    <h2>출력 결과</h2>
-    <pre id="output"></pre>
+    <div class="output-container">
+        <h2>출력 결과</h2>
+        <pre id="output"></pre>
+    </div>
 
     <script>
         let pyodideReady = false;
@@ -130,5 +135,5 @@ output
 </body>
 </html>
 
-//1.22
+ver 1.22
 
