@@ -40,47 +40,48 @@
 
         function tricToPython(tricCode) {
             let lines = tricCode.trim().split("\n");
-
+        
             // '!DOCTYPE 교주' 확인 & 삭제
             if (!lines[0].startsWith("!DOCTYPE 교주")) {
                 return { error: "❌ 교주가 없습니다! 실행 불가!" };
             }
             lines.shift(); // 첫 줄 삭제
-
+        
             let pythonCode = lines.join("\n");
-
+        
             // 변환할 규칙 정의 (정규식 사용)
             let rules = {
                 "교주님! ": "print(",
-                " 아! ": " += ", // 예제: "숫자 아! 1" → "숫자 += 1"
+                "아니시겠죠?!": "else:", // ✅ else 변환 정상화
                 "친구인 거예요~? ": "", // '변수' 키워드 삭제
                 " 에헷: ": " = ", // 변수 할당
                 "되나요? ": "==",
                 "귀여워 ": "return " // 반환 변환
             };
-
+        
             for (let tric in rules) {
                 let regex = new RegExp(tric, "g");
                 pythonCode = pythonCode.replace(regex, rules[tric]);
             }
-
+        
             // ✅ 조건문 변환: "되는거죠?! <조건식> 되나요? <값> :" → "if <조건식> == <값>:"
             pythonCode = pythonCode.replace(/되는거죠\?!\s+(.+?)\s+되나요\?\s+(.+?)\s*:/g, "if ($1 == $2):");
-
+        
             // ✅ else 변환: "아니시겠죠?! :" → "else:"
             pythonCode = pythonCode.replace(/아니시겠죠\?!\s*:/g, "else:");
-
-            // ✅ 함수 변환: "부르셨나요~? 함수이름(매개변수):" → "def 함수이름(매개변수):"
-            pythonCode = pythonCode.replace(/부르셨나요~?\s+(\w+)\((.*?)\)\s*:/g, "def $1($2):");
-
-            // ✅ 반복문 변환: "계~속 변수 에헷: 시작 부터 끝 까지:" → "for 변수 in range(시작, 끝):"
-            pythonCode = pythonCode.replace(/계~속\s+(\w+)\s+에헷:\s*(.+?)\s+부터\s+(.+?)\s+까지:/g, "for $1 in range($2, $3):");
-
+        
+            // ✅ 함수 변환 수정: "부르셨나요~? 함수이름(매개변수):" → "def 함수이름(매개변수):"
+            pythonCode = pythonCode.replace(/부르셨나요~?\s+(\w+)\s*\((.*?)\)\s*:/g, "def $1($2):");
+        
+            // ✅ 반복문 변환 수정: "계~속 변수 에헷: 시작 부터 끝 까지:" → "for 변수 in range(시작, 끝):"
+            pythonCode = pythonCode.replace(/계~속\s+(\w+)\s+에헷:\s*(\d+)\s+부터\s+(\d+)\s+까지:/g, "for $1 in range($2, $3):");
+        
             // ✅ print() 괄호 자동 수정
             pythonCode = pythonCode.replace(/print\((.*?)$/gm, 'print($1)');
-
+        
             return { code: pythonCode };
         }
+
 
 
 
