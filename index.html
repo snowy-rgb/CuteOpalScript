@@ -1,74 +1,145 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>트릭컬 실행기</title>
+
   <!-- Pyodide -->
   <script src="https://cdn.jsdelivr.net/pyodide/v0.23.0/full/pyodide.js"></script>
+
   <!-- CodeMirror CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/codemirror.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/theme/dracula.min.css">
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/codemirror.min.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/theme/dracula.min.css"
+  />
+
   <style>
-    body {
+    /* 전체 레이아웃 기본 설정 */
+    html, body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      padding: 0;
+      height: 100%;
       background: #282a36;
       color: #f8f8f2;
+      font-family: Arial, sans-serif;
     }
-    header {
-      text-align: center;
-      padding: 1em;
-    }
+
+    /* 메인 컨테이너: 상단 바 + 에디터/출력창 */
     #main-container {
       display: flex;
-      height: calc(100vh - 140px); /* 헤더, 컨트롤 영역 제외 */
+      flex-direction: column;
+      height: 100%;
     }
+
+    /* 상단 바 (타이틀, 상태, 실행 버튼) */
+    #top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1em;
+      background: #282a36;
+      border-bottom: 1px solid #444;
+      height: 60px;
+    }
+    #top-bar h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    #status {
+      margin: 0 1em;
+      /* Pyodide 로드 상태에 따라 색상 변경 가능 */
+      color: #50fa7b; /* 예: 로드 완료 시 녹색 */
+    }
+    #runButton {
+      font-size: 16px;
+      padding: 10px 20px;
+      background: #6272a4;
+      border: none;
+      color: #f8f8f2;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    #runButton:disabled {
+      background: #44475a;
+      cursor: not-allowed;
+    }
+
+    /* 에디터와 출력창을 담는 영역 */
+    #editor-output-wrapper {
+      display: flex;
+      flex: 1; /* 남은 공간 전부 사용 */
+    }
+
+    /* 에디터 영역 */
     .editor {
       flex: 1;
-      border-right: 1px solid #444;
+      /* separator를 따로 넣을 것이므로 border-right는 제거 */
     }
+
+    /* 에디터와 출력창 사이 구분선(이미지) */
+    .separator {
+      flex: 0 0 auto;
+      width: 8px; /* '얇게' 보이도록 폭 설정 (원하시면 조정) */
+      background: #282a36; /* 혹은 투명/다른 색상 */
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+    .separator img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* 이미지 비율 맞춤 */
+    }
+
+    /* 출력창 영역 */
     .output {
       flex: 1;
       background: #44475a;
       padding: 10px;
       overflow: auto;
     }
+
+    /* CodeMirror 에디터 전체 높이 채우기 */
     .CodeMirror {
       height: 100%;
-    }
-    #controls {
-      text-align: center;
-      padding: 10px;
-    }
-    button {
-      font-size: 16px;
-      padding: 10px 20px;
-    }
-    #status {
-      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>트릭컬 실행기</h1>
-    <p id="status">🔄 Pyodide 로드 중...</p>
-  </header>
   <div id="main-container">
-    <!-- CodeMirror 에디터 (왼쪽) -->
-    <div class="editor">
-      <textarea id="code">
+    <!-- 상단 바 -->
+    <div id="top-bar">
+      <h1>트릭컬 실행기</h1>
+      <p id="status">🔄 Pyodide 로드 중...</p>
+      <button id="runButton" onclick="runTric()" disabled>로딩 중...</button>
+    </div>
+
+    <!-- 에디터 / 구분선 / 출력창 -->
+    <div id="editor-output-wrapper">
+      <!-- 왼쪽: CodeMirror 에디터 -->
+      <div class="editor">
+        <textarea id="code">
 !DOCTYPE 교주
-      </textarea>
+        </textarea>
+      </div>
+
+      <!-- 가운데 구분선 (이미지) -->
+      <div class="separator">
+        <!-- 실제로 사용할 얇은 이미지 경로로 교체하세요 -->
+        <img src="thin-separator.png" alt="Separator" />
+      </div>
+
+      <!-- 오른쪽: 출력창 -->
+      <div class="output">
+        <pre id="output">출력 결과가 여기에 표시됩니다.</pre>
+      </div>
     </div>
-    <!-- 출력창 (오른쪽) -->
-    <div class="output">
-      <pre id="output">출력 결과가 여기에 표시됩니다.</pre>
-    </div>
-  </div>
-  <div id="controls">
-    <button id="runButton" onclick="runTric()" disabled>로딩 중...</button>
   </div>
 
   <!-- CodeMirror JS -->
@@ -94,15 +165,15 @@
     // CodeMirror 에디터 초기화
     window.addEventListener("load", function() {
       editor = CodeMirror.fromTextArea(document.getElementById("code"), {
-        lineNumbers: true,         // 왼쪽 라인 번호 표시
-        theme: "dracula",          // 어두운 테마
-        mode: "python",            // Python 모드 (필요 시 다른 모드로 변경)
-        tabSize: 4,                // 탭 크기 4칸
-        indentWithTabs: false      // 탭 대신 공백 사용
+        lineNumbers: true,    // 라인 번호
+        theme: "dracula",     // 어두운 테마
+        mode: "python",       // Python 모드
+        tabSize: 4,           // 탭 크기
+        indentWithTabs: false // 탭 대신 공백
       });
     });
 
-    // 트릭컬 언어를 Python 코드로 변환하는 함수
+    // 트릭컬 -> Python 변환
     function tricToPython(tricCode) {
       let lines = tricCode.trim().split("\n");
 
@@ -114,14 +185,14 @@
 
       let pythonCode = lines.join("\n");
 
-      // 변환 규칙 정의 (정규식 사용)
+      // 변환 규칙
       let rules = {
         "교주님! ": "print(",
-        "아니시겠죠?!": "else:", // else 변환
-        "친구인 거예요~? ": "", // 변수 키워드 삭제
-        " 에헷: ": " = ", // 변수 할당
+        "아니시겠죠?!": "else:",
+        "친구인 거예요~? ": "",
+        " 에헷: ": " = ",
         "되나요? ": "==",
-        "귀여워 ": "return " // 반환 변환
+        "귀여워 ": "return "
       };
 
       for (let tric in rules) {
@@ -129,26 +200,31 @@
         pythonCode = pythonCode.replace(regex, rules[tric]);
       }
 
-      // 조건문 변환: "되는거죠?! <조건식> 되나요? <값> :" → "if (<조건식> == <값>):"
-      pythonCode = pythonCode.replace(/되는거죠\?!\s+(.+?)\s+되나요\?\s+(.+?)\s*:/g, "if ($1 == $2):");
-
-      // else 변환: "아니시겠죠?! :" → "else:"
-      pythonCode = pythonCode.replace(/아니시겠죠\?!\s*:/g, "else:");
-
-      // 함수 변환: "부르셨나요~? 함수이름(매개변수) :" → "def 함수이름(매개변수):"
-      pythonCode = pythonCode.replace(/부르셨나요~\?\s+(\w+)\s*\((.*?)\)\s*:?\s*$/gm, "def $1($2):");
-
-      // for 루프 변환: "계~속 <변수> 에헷: <시작숫자> 부터 <끝숫자> 까지:" → "for <변수> in range(<시작숫자>, <끝숫자>+1):"
+      // 조건문 변환
       pythonCode = pythonCode.replace(
-        /계~속\s+([\uac00-\ud7a3\w]+)\s+에헷:\s+(\d+)\s+부터\s+(\d+)\s+까지:/g,
-        "for $1 in range($2, $3+1):"
+        /되는거죠\?!\s+(.+?)\s+되나요\?\s+(.+?)\s*:/g,
+        "if ($1 == $2):"
       );
 
+      // else 변환
+      pythonCode = pythonCode.replace(/아니시겠죠\?!\s*:/g, "else:");
+
+      // 함수 변환
+      pythonCode = pythonCode.replace(
+        /부르셨나요~\?\s+(\w+)\s*\((.*?)\)\s*:?\s*$/gm,
+        "def $1($2):"
+      );
+
+      // for 루프 변환
+      pythonCode = pythonCode.replace(
+        /계~속\s+(\w+)\s+에헷:\s+(\d+)\s+부터\s+(\d+)\s+까지:/g,
+        "for $1 in range($2, $3+1):"
+      );
 
       return { code: pythonCode };
     }
 
-    // 실행 함수: CodeMirror의 값을 가져와 변환 후 Pyodide로 실행
+    // 실행 함수
     async function runTric() {
       if (!pyodideReady) {
         document.getElementById("output").textContent = "⚠️ Pyodide가 아직 로드되지 않았습니다!";
@@ -176,6 +252,7 @@ ${result.code}
 output = mystdout.getvalue()
 output
         `;
+
         let output = await pyodideInstance.runPython(pythonCode);
         document.getElementById("output").textContent = output;
       } catch (err) {
@@ -185,4 +262,5 @@ output
   </script>
 </body>
 </html>
+
 
