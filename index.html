@@ -36,13 +36,13 @@
 
             // 변환할 규칙 정의
             let rules = {
-                "교주님! ": "print(",
-                "선물이에요! ": "def ",
-                "이거 하면 ": "if ",
-                "안되는건가요?:": "else:",
-                "계속할게요! ": "for ",
-                "에헷 ": " = ",
-                "같아요!": "=="
+                "트릭 ": "print(",
+                "트릭마법 ": "def ",
+                "트릭이면 ": "if ",
+                "그게아니면:": "else:",
+                "트릭반복 ": "for ",
+                "는 ": " = ",
+                "같다": "=="
             };
 
             for (let tric in rules) {
@@ -64,7 +64,19 @@
 
             let pyodide = await loadPyodide();
             try {
-                let output = await pyodide.runPython(result.code);
+                let pythonCode = `
+import sys
+from io import StringIO
+
+sys.stdout = mystdout = StringIO()
+
+${result.code}
+
+output = mystdout.getvalue()
+output
+                `;
+                
+                let output = await pyodide.runPython(pythonCode);
                 document.getElementById("output").textContent = output;
             } catch (err) {
                 document.getElementById("output").textContent = "⚠️ 실행 오류: " + err;
@@ -73,4 +85,5 @@
     </script>
 </body>
 </html>
+
 
