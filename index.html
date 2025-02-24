@@ -52,9 +52,7 @@
             // 변환할 규칙 정의 (정규식 사용)
             let rules = {
                 "교주님! ": "print(",
-                "되는거죠?! ": "if ",
-                "아니시겠죠?! ": "else ",
-                "계~속 ": "for ",
+                "아니시겠죠?! ": "else:",
                 "친구인 거예요~? ": "", // '변수' 키워드 삭제
                 " 에헷: ": " = ", // 변수 할당
                 "되나요? ": "==",
@@ -66,17 +64,21 @@
                 pythonCode = pythonCode.replace(regex, rules[tric]);
             }
 
-            // 부르셨나요~? 함수이름(매개변수):  → def 함수이름(매개변수):
+            // 조건문 변환: "되는거죠?! <조건식> 되나요? <값> :" → "if <조건식> == <값>:"
+            pythonCode = pythonCode.replace(/되는거죠\?!\s+(.+?)\s+되나요\?\s+(.+?)\s*:/g, "if ($1 == $2):");
+
+            // 함수 변환: "부르셨나요~? 함수이름(매개변수):" → "def 함수이름(매개변수):"
             pythonCode = pythonCode.replace(/부르셨나요~?\s+(\w+)\((.*?)\):/g, "def $1($2):");
 
-            // 조건문 변환 개선: "되는거죠?! <조건식> 되나요? <값> :" → "if <조건식> == <값>:"
-            pythonCode = pythonCode.replace(/if (.+?) 되나요\? (.+?)\s*:/g, "if ($1 == $2):");
+            // 반복문 변환: "계~속 변수 는 시작 부터 끝 까지:" → "for 변수 in range(시작, 끝):"
+            pythonCode = pythonCode.replace(/계~속\s+(\w+)\s+에헷:\s*(.+?)\s+부터\s+(.+?)\s+까지:/g, "for $1 in range($2, $3):");
 
-            // print() 괄호 자동 수정 (닫는 `)` 추가/제거)
-            pythonCode = pythonCode.replace(/print\((.*?)\)\)/g, "print($1)"); // `))` 오류 수정
+            // print() 괄호 자동 수정
+            pythonCode = pythonCode.replace(/print\((.*?)$/gm, 'print($1)');
 
             return { code: pythonCode };
         }
+
 
 
         //pyodide 로드
