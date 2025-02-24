@@ -70,14 +70,15 @@
             // ✅ else 변환: "아니시겠죠?! :" → "else:"
             pythonCode = pythonCode.replace(/아니시겠죠\?!\s*:/g, "else:");
         
-            // ✅ 함수 변환 수정 (콜론 문제 해결): "부르셨나요~? 함수이름(매개변수) :" → "def 함수이름(매개변수):"
-            pythonCode = pythonCode.replace(/부르셨나요~?\s+(\w+)\s*\((.*?)\)\s*:?\s*$/gm, "def $1($2):");
+            // ✅ 함수 변환 수정 (특수문자 문제 해결): "부르셨나요~? 함수이름(매개변수) :" → "def 함수이름(매개변수):"
+            pythonCode = pythonCode.replace(/부르셨나요~\?\s+(\w+)\s*\((.*?)\)\s*:?\s*$/gm, "def $1($2):");
         
             // ✅ print() 괄호 자동 수정
             pythonCode = pythonCode.replace(/print\((.*?)$/gm, 'print($1)');
         
             return { code: pythonCode };
         }
+
 
 
 
