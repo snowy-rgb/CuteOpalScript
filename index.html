@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>트릭컬 실행기</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.0/full/pyodide.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        textarea { width: 80%; height: 200px; font-size: 16px; }
+        button { font-size: 16px; padding: 10px; }
+        pre { background: #f4f4f4; padding: 10px; text-align: left; width: 80%; margin: auto; }
+    </style>
+</head>
+<body>
+    <h1>트릭컬 실행기</h1>
+    <textarea id="code">
+!DOCTYPE 교주
+</textarea>
+    <br>
+    <button onclick="runTric()">실행</button>
+    <h2>출력 결과</h2>
+    <pre id="output"></pre>
+
+    <script>
+        function tricToPython(tricCode) {
+            // 먼저 '!DOCTYPE 교주'가 첫 줄에 있는지 확인
+            let lines = tricCode.trim().split("\n");
+            if (!lines[0].startsWith("!DOCTYPE 교주")) {
+                return { error: "❌ 교주가 없습니다! 실행 불가!" };
+            }
+
+            // 변환할 규칙 정의
+            let rules = {
+                "트릭 ": "print(",
+                "트릭마법 ": "def ",
+                "트릭이면 ": "if ",
+                "그게아니면:": "else:",
+                "트릭반복 ": "for ",
+                "는 ": " = ",
+                "같다": "=="
+            };
+
+            let pythonCode = tricCode;
+            for (let tric in rules) {
+                let regex = new RegExp(tric, "g");
+                pythonCode = pythonCode.replace(regex, rules[tric]);
+            }
+
+            return { code: pythonCode };
+        }
+
+        async function runTric() {
+            let tricCode = document.getElementById("code").value;
+            let result = tricToPython(tricCode);
+
+            if (result.error) {
+                document.getElementById("output").textContent = result.error;
+                return;
+            }
+
+            let pyodide = await loadPyodide();
+            try {
+                let output = await pyodide.runPython(result.code);
+                document.getElementById("output").textContent = output;
+            } catch (err) {
+                document.getElementById("output").textContent = "⚠️ 실행 오류: " + err;
+            }
+        }
+    </script>
+</body>
+</html>
