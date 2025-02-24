@@ -51,15 +51,15 @@
 
             // 변환할 규칙 정의
             let rules = {
-                "트릭 ": "print(",
-                "트릭마법 ": "def ",
-                "트릭이면 ": "if ",
-                "그게아니면:": "else:",
-                "트릭반복 ": "for ",
-                "변수 ": "", // '변수' 키워드 삭제
-                " 는 ": " = ", // 변수 할당
-                "같다": "==",
-                "반환 ": "return " // 반환 변환
+                "교주님! ": "print(",
+                "부르셨나요~? ": "def ",
+                "되는거죠?! ": "if ",
+                "아니시겠죠?!:": "else:",
+                "계~속 ": "for ",
+                "친구인 거예요~? ": "", // '변수' 키워드 삭제
+                " 에헷: ": " = ", // 변수 할당
+                "되나요? ": "==",
+                "귀여워 ": "return " // 반환 변환
             };
 
             for (let tric in rules) {
@@ -69,6 +69,7 @@
 
             return { code: pythonCode };
         }
+        //pyodide 로드
         async function runTric() {
             if (!pyodideReady) {
                 document.getElementById("output").textContent = "⚠️ Pyodide가 아직 로드되지 않았습니다!";
